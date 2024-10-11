@@ -1,0 +1,138 @@
+local player = game.Players.LocalPlayer
+local highlightColor = {
+    Ally = Color3.fromRGB(0, 0, 255),  -- Blue for allies
+    Enemy = Color3.fromRGB(255, 0, 0)  -- Red for enemies
+}
+
+local function createHighlight(targetPlayer)
+    local highlight = Instance.new("Highlight")
+    highlight.Adornee = targetPlayer.Character
+    highlight.FillTransparency = 0.5  -- Semi-transparent
+
+    -- Set color based on team
+    highlight.FillColor = (targetPlayer.Team == player.Team) and highlightColor.Ally or highlightColor.Enemy
+    highlight.Parent = targetPlayer.Character
+end
+
+local function createTracer(targetPlayer)
+    local beam = Instance.new("Beam")
+    beam.Color = ColorSequence.new((targetPlayer.Team == player.Team) and highlightColor.Ally or highlightColor.Enemy)
+    beam.Width0 = 0.1
+    beam.Width1 = 0.1
+
+    local attachment0 = Instance.new("Attachment")
+    attachment0.Name = "PlayerAttachment"
+    attachment0.Parent = player.Character:FindFirstChild("HumanoidRootPart")
+
+    local attachment1 = Instance.new("Attachment")
+    attachment1.Name = "TargetAttachment"
+    attachment1.Parent = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+    beam.Attachment0 = attachment0
+    beam.Attachment1 = attachment1
+    beam.Parent = attachment0
+end
+
+local function updateHighlightsAndTracers()
+    for _, targetPlayer in pairs(game.Players:GetPlayers()) do
+        if targetPlayer ~= player and targetPlayer.Character then
+            -- Remove existing highlights
+            local existingHighlight = targetPlayer.Character:FindFirstChildOfClass("Highlight")
+            if existingHighlight then
+                existingHighlight:Destroy()
+            end
+            
+            -- Remove existing tracers
+            local existingBeam = player.Character:FindFirstChild("HumanoidRootPart"):FindFirstChild("Beam")
+            if existingBeam then
+                existingBeam:Destroy()
+            end
+
+            -- Create new highlight
+            createHighlight(targetPlayer)
+            -- Create tracer line
+            createTracer(targetPlayer)
+        end
+    end
+end
+
+-- Update highlights when a player's character is added
+game.Players.PlayerAdded:Connect(function(targetPlayer)
+    targetPlayer.CharacterAdded:Connect(function()
+        updateHighlightsAndTracers()
+    end)
+end)
+
+-- Update highlights for all players already in the game
+for _, targetPlayer in pairs(game.Players:GetPlayers()) do
+    if targetPlayer ~= player then
+        targetPlayer.CharacterAdded:Connect(function()
+            updateHighlightsAndTracers()
+        end)
+    end
+end
+
+-- Continuously update highlights and tracers every few seconds
+while wait(1) do
+    updateHighlightsAndTracers()
+end
+--------------------------------------------------
+
+
+
+
+local player = game.Players.LocalPlayer
+local highlightColor = {
+    Ally = Color3.fromRGB(0, 0, 255),  -- Blue for allies
+    Enemy = Color3.fromRGB(255, 0, 0)  -- Red for enemies
+}
+
+local function createHighlight(targetPlayer)
+    local highlight = Instance.new("Highlight")
+    highlight.Adornee = targetPlayer.Character
+    highlight.FillTransparency = 0.5  -- Semi-transparent
+
+    -- Set color based on team
+    if targetPlayer.Team == player.Team then
+        highlight.FillColor = highlightColor.Ally
+    else
+        highlight.FillColor = highlightColor.Enemy
+    end
+
+    highlight.Parent = targetPlayer.Character
+end
+
+local function updateHighlights()
+    for _, targetPlayer in pairs(game.Players:GetPlayers()) do
+        if targetPlayer ~= player and targetPlayer.Character then
+            -- Remove existing highlights
+            local existingHighlight = targetPlayer.Character:FindFirstChildOfClass("Highlight")
+            if existingHighlight then
+                existingHighlight:Destroy()
+            end
+            -- Create new highlight
+            createHighlight(targetPlayer)
+        end
+    end
+end
+
+-- Update highlights when a player's character is added
+game.Players.PlayerAdded:Connect(function(targetPlayer)
+    targetPlayer.CharacterAdded:Connect(function()
+        updateHighlights()
+    end)
+end)
+
+-- Update highlights for all players already in the game
+for _, targetPlayer in pairs(game.Players:GetPlayers()) do
+    if targetPlayer ~= player then
+        targetPlayer.CharacterAdded:Connect(function()
+            updateHighlights()
+        end)
+    end
+end
+
+-- Continuously update highlights every few seconds
+while wait(1) do
+    updateHighlights()
+end
