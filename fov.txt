@@ -1,0 +1,37 @@
+-- Local Player FOV Adjuster
+local player = game.Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+-- Default FOV
+local defaultFOV = 70
+camera.FieldOfView = defaultFOV
+
+-- Function to increase FOV
+local function increaseFOV(amount)
+    camera.FieldOfView = math.clamp(camera.FieldOfView + amount, 30, 120) -- Set limits for FOV
+end
+
+-- Function to decrease FOV
+local function decreaseFOV(amount)
+    camera.FieldOfView = math.clamp(camera.FieldOfView - amount, 30, 120) -- Set limits for FOV
+end
+
+-- User input to adjust FOV
+local UserInputService = game:GetService("UserInputService")
+
+UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+    if not gameProcessedEvent then
+        if input.KeyCode == Enum.KeyCode.Up then
+            increaseFOV(5) -- Increase FOV by 5
+        elseif input.KeyCode == Enum.KeyCode.Down then
+            decreaseFOV(5) -- Decrease FOV by 5
+        end
+    end
+end)
+
+-- Optional: Reset FOV to default on a key press
+UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+    if not gameProcessedEvent and input.KeyCode == Enum.KeyCode.R then
+        camera.FieldOfView = defaultFOV
+    end
+end)
