@@ -1,0 +1,33 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+local speedMultiplier = 1.5 -- Adjust this value to control speed
+
+-- Function to update the movement based on input
+local function updateMovement()
+    local humanoid = Character:FindFirstChildOfClass("Humanoid")
+    if humanoid and humanoid.MoveDirection.Magnitude > 0 then
+        -- Get the current direction and apply the speed multiplier
+        local direction = humanoid.MoveDirection
+        local newVelocity = direction * humanoid.WalkSpeed * speedMultiplier
+
+        -- Update the velocity of the HumanoidRootPart
+        HumanoidRootPart.Velocity = Vector3.new(newVelocity.X, HumanoidRootPart.Velocity.Y, newVelocity.Z)
+    else
+        -- If no movement input, keep the Y velocity (gravity)
+        HumanoidRootPart.Velocity = Vector3.new(0, HumanoidRootPart.Velocity.Y, 0)
+    end
+end
+
+-- Connect the RenderStepped event to update movement
+RunService.RenderStepped:Connect(updateMovement)
+
+-- Reset movement when the character is reset
+LocalPlayer.CharacterAdded:Connect(function(newCharacter)
+    Character = newCharacter
+    HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+end)
