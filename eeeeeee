@@ -1,0 +1,199 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+-- Create the ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Create the main frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 300, 0, 200)
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+mainFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+mainFrame.Parent = ScreenGui
+
+-- Create a title bar for minimize and close buttons
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 30)
+titleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+titleBar.Parent = mainFrame
+
+-- Create a close button
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -30, 0, 0)
+closeButton.Text = "X"
+closeButton.TextColor3 = Color3.fromRGB(255, 0, 0)
+closeButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.Parent = titleBar
+
+-- Create a minimize button
+local minimizeButton = Instance.new("TextButton")
+minimizeButton.Size = UDim2.new(0, 30, 0, 30)
+minimizeButton.Position = UDim2.new(1, -60, 0, 0)
+minimizeButton.Text = "_"
+minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+minimizeButton.Parent = titleBar
+
+-- Create the TextBox for entering the player's name
+local TextBox = Instance.new("TextBox")
+TextBox.Parent = mainFrame
+TextBox.Size = UDim2.new(0, 200, 0, 50)
+TextBox.Position = UDim2.new(0.5, -100, 0.5, -25)
+TextBox.PlaceholderText = "Enter Player Name"
+TextBox.ClearTextOnFocus = false
+TextBox.Text = "" -- Ensure there's no default text like "Textbox"
+
+-- Create the "Sit and Face Player" button
+local TextButton = Instance.new("TextButton")
+TextButton.Parent = mainFrame
+TextButton.Size = UDim2.new(0, 200, 0, 50)
+TextButton.Position = UDim2.new(0.5, -100, 0.5, 30)
+TextButton.Text = "Sit and Face Player"
+
+-- Minimize functionality (hide the main frame and show a small bar)
+local isMinimized = false
+local minimizedBar = Instance.new("Frame")
+minimizedBar.Size = UDim2.new(0, 300, 0, 30)
+minimizedBar.Position = mainFrame.Position  -- Store current position when minimized
+minimizedBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+minimizedBar.Visible = false
+minimizedBar.Parent = ScreenGui
+
+local restoreButton = Instance.new("TextButton")
+restoreButton.Size = UDim2.new(0, 30, 0, 30)
+restoreButton.Text = "Restore"
+restoreButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+restoreButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+restoreButton.Parent = minimizedBar
+
+-- Store the position of the main frame before minimizing
+local previousPosition = mainFrame.Position
+
+-- Close functionality
+closeButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- Minimize functionality
+minimizeButton.MouseButton1Click:Connect(function()
+    if not isMinimized then
+        -- Store the current position before minimizing
+        previousPosition = mainFrame.Position
+        mainFrame.Visible = false
+        minimizedBar.Visible = true
+        minimizedBar.Position = previousPosition -- Keep minimized bar's position the same
+        isMinimized = true
+    else
+        -- When restoring, set the position to the saved position
+        mainFrame.Position = previousPosition
+        mainFrame.Visible = true
+        minimizedBar.Visible = false
+        isMinimized = false
+    end
+end)
+
+-- Restore the GUI from minimized state
+restoreButton.MouseButton1Click:Connect(function()
+    -- When restoring, set the position to the saved position
+    mainFrame.Position = previousPosition
+    mainFrame.Visible = true
+    minimizedBar.Visible = false
+    isMinimized = false
+end)
+
+-- Function to get player by partial name
+local function getPlayerByPartialName(partialName)
+    local matchingPlayers = {}
+    for _, player in pairs(Players:GetPlayers()) do
+        if string.lower(player.DisplayName):find(string.lower(partialName), 1, true) then
+            table.insert(matchingPlayers, player)
+        end
+    end
+    return matchingPlayers
+end
+
+-- Function to sit and face the player, with slight forward movement
+local function sitAndFacePlayer(targetPlayer)
+    local speaker = game.Players.LocalPlayer
+    local speakerCharacter = speaker.Character
+    local targetCharacter = targetPlayer.Character
+    
+    -- Ensure both characters are valid
+    if speakerCharacter and targetCharacter then
+        local humanoid = speakerCharacter:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.Sit = true
+        end
+        
+        -- Create a heartbeat connection to adjust position continuously
+        local headSit
+        headSit = RunService.Heartbeat:Connect(function()
+            if targetPlayer and targetPlayer.Character and speakerCharacter then
+                -- Make sure we always use the latest character references
+                local targetRoot = targetPlayer.Character:WaitForChild("HumanoidRootPart", 1)
+                local speakerRoot = speakerCharacter:WaitForChild("HumanoidRootPart", 1)
+                
+                -- If both parts are found, update position to face the player and move slightly forward
+                if targetRoot and speakerRoot then
+                    -- Move slightly forward by +0.4 (adjust this value as needed)
+                    speakerRoot.CFrame = targetRoot.CFrame * CFrame.Angles(0, math.rad(180), 0) * CFrame.new(0, 1.8, 0.6)
+                end
+            else
+                -- Disconnect if the target player or speaker's character is no longer valid
+                headSit:Disconnect()
+            end
+        end)
+    end
+end
+
+-- Button click event handler
+TextButton.MouseButton1Click:Connect(function()
+    local inputName = TextBox.Text
+    if inputName and inputName ~= "" then
+        local playersFound = getPlayerByPartialName(inputName)
+        if #playersFound == 1 then
+            -- If exactly one player matches, sit and face them
+            local targetPlayer = playersFound[1]
+            sitAndFacePlayer(targetPlayer)
+        elseif #playersFound > 1 then
+            -- If multiple players match, show a warning
+            print("Multiple players found with that name!")
+        else
+            print("No players found with that name!")
+        end
+    else
+        print("Please enter a valid player name!")
+    end
+end)
+
+-- Make the GUI movable by dragging the title bar
+local dragging = false
+local dragStart
+local startPos
+
+-- Event for when the mouse is clicked down on the title bar
+titleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+    end
+end)
+
+-- Event for when the mouse is moved while dragging
+titleBar.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        -- Move the mainFrame according to the mouse movement
+        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- Event for when the mouse button is released
+titleBar.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
